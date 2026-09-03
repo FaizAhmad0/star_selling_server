@@ -170,11 +170,29 @@ export async function verifyOtp(uid, otp) {
 }
 
 export async function getCurrentUser(userId) {
-  const user = await User.findById(userId).populate("platform").populate("platforms");
+  const user = await User.findById(userId)
+    .populate("platform")
+    .populate("platforms")
+    .populate("websiteManager", "name");
   if (!user) {
     throw new AppError("User not found", 401);
   }
-  return formatUserData(user);
+  const obj = user.toObject();
+  delete obj.password;
+  delete obj.tokenVersion;
+  delete obj.phone;
+  let websiteManager = obj.websiteManager;
+  if (websiteManager && typeof websiteManager === "object" && "name" in websiteManager) {
+    websiteManager = websiteManager.name;
+  }
+  return {
+    ...obj,
+    id: obj._id,
+    websiteManager: websiteManager ?? null,
+    gstNumber: obj.gstNumber ?? obj.gst ?? null,
+    platform: user.platform?._id ? { id: user.platform._id, name: user.platform.name } : (user.platform ?? null),
+    platforms: user.platforms?.map((p) => (p._id ? { id: p._id, name: p.name } : p)) ?? [],
+  };
 }
 
 export async function invalidateSessions(userId) {
