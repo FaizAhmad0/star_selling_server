@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import Platform from "../models/platform.model.js";
 import OtpToken from "../models/otp-token.model.js";
 import AppError from "../utils/app-error.js";
 import env from "../config/env.js";
@@ -38,6 +39,8 @@ function formatUserData(user) {
     enrollmentIdAmazon: user.enrollmentIdAmazon,
     enrollmentIdWebsite: user.enrollmentIdWebsite,
     enrollmentIdEtsy: user.enrollmentIdEtsy,
+    platform: user.platform?._id ? { id: user.platform._id, name: user.platform.name } : user.platform ?? null,
+    platforms: user.platforms?.map((p) => (p._id ? { id: p._id, name: p.name } : p)) ?? [],
   };
 }
 
@@ -74,7 +77,10 @@ export function setAuthCookie(res, token) {
 export async function login(uid, password) {
   const numericUid = normalizeUid(uid);
 
-  const user = await User.findOne({ uid: numericUid }).select("+password");
+  const user = await User.findOne({ uid: numericUid })
+    .select("+password")
+    .populate("platform")
+    .populate("platforms");
   if (!user) {
     throw new AppError("User not found with this UID", 401);
   }
@@ -133,7 +139,10 @@ export async function generateOtp(user) {
 export async function verifyOtp(uid, otp) {
   const numericUid = normalizeUid(uid);
 
-  const user = await User.findOne({ uid: numericUid }).select("+password");
+  const user = await User.findOne({ uid: numericUid })
+    .select("+password")
+    .populate("platform")
+    .populate("platforms");
   if (!user) {
     throw new AppError("User not found with this UID", 401);
   }
@@ -161,7 +170,7 @@ export async function verifyOtp(uid, otp) {
 }
 
 export async function getCurrentUser(userId) {
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).populate("platform").populate("platforms");
   if (!user) {
     throw new AppError("User not found", 401);
   }
