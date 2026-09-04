@@ -38,3 +38,39 @@ export const bulkCreateUsers = asyncHandler(async (req, res) => {
     },
   });
 });
+
+export const getUsers = asyncHandler(async (req, res) => {
+  const result = await userService.getUsers(req.query, req.user);
+
+  return sendSuccess(res, {
+    message: "Users fetched successfully",
+    data: result,
+  });
+});
+
+export const getUserById = asyncHandler(async (req, res) => {
+  const user = await userService.getUserById(req.params.id);
+
+  return sendSuccess(res, {
+    message: "User fetched successfully",
+    data: user,
+  });
+});
+
+export const updateUser = asyncHandler(async (req, res) => {
+  const user = await userService.updateUser(req.params.id, req.body);
+
+  return sendSuccess(res, {
+    message: "User updated successfully",
+    data: user,
+  });
+});
+
+export const deleteUser = asyncHandler(async (req, res) => {
+  const user = await userService.deleteUser(req.params.id);
+
+  return sendSuccess(res, {
+    message: "User deleted successfully",
+    data: { id: user._id },
+  });
+});
