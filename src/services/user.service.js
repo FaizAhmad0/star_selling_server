@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
 import { getNextUid } from "../models/counter.model.js";
 import AppError from "../utils/app-error.js";
 
@@ -182,10 +183,11 @@ export async function getUsers(query, user) {
 
   // ── RBAC: Manager sees only their assigned users ──
   if (user.role === "manager") {
+    const userObjectId = new mongoose.Types.ObjectId(user.id);
     matchStage.$or = [
-      { amazonManager: user.id },
-      { websiteManager: user.id },
-      { etsyManager: user.id },
+      { amazonManager: userObjectId },
+      { websiteManager: userObjectId },
+      { etsyManager: userObjectId },
     ];
   }
 
@@ -238,15 +240,27 @@ export async function getUsers(query, user) {
     let managerId = manager;
     // If it looks like a name (not an ObjectId), resolve it
     if (!/^[0-9a-fA-F]{24}$/.test(manager)) {
-      const managerUser = await User.findOne({ name: manager, role: "manager" }).select("_id").lean();
+      const managerUser = await User.findOne({
+        name: { $regex: `^${manager.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+        role: "manager",
+      }).select("_id name").lean();
       if (managerUser) {
         managerId = managerUser._id.toString();
+      } else {
+        const managerByUid = await User.findOne({
+          uid: manager,
+          role: "manager",
+        }).select("_id name uid").lean();
+        if (managerByUid) {
+          managerId = managerByUid._id.toString();
+        }
       }
     }
+    const managerObjectId = new mongoose.Types.ObjectId(managerId);
     const managerConditions = [
-      { amazonManager: managerId },
-      { websiteManager: managerId },
-      { etsyManager: managerId },
+      { amazonManager: managerObjectId },
+      { websiteManager: managerObjectId },
+      { etsyManager: managerObjectId },
     ];
 
     if (matchStage.$and) {

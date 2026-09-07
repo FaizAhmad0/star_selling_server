@@ -8,6 +8,7 @@ import errorHandler from "./middlewares/error.middleware.js";
 import userRoutes from "./routes/user.routes.js";
 import managerRoutes from "./routes/manager.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import platformRoutes from "./routes/platform.routes.js";
 import { csrfProtection } from "./middlewares/csrf.middleware.js";
 
 const app = express();
@@ -31,6 +32,7 @@ app.get("/api/v1/health", async (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", csrfProtection, userRoutes);
 app.use("/api/v1/managers", csrfProtection, managerRoutes);
+app.use("/api/v1/platforms", csrfProtection, platformRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
