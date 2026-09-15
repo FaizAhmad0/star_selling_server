@@ -278,7 +278,8 @@ export async function getUsers(query, user) {
 
   // ── Batch filter (any platform batch) ──
   if (batch) {
-    const batchRegex = { $regex: batch, $options: "i" };
+    const trimmedBatch = batch.trim();
+    const batchRegex = { $regex: trimmedBatch, $options: "i" };
     const batchConditions = [
       { batchAmazon: batchRegex },
       { batchWebsite: batchRegex },
